@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,6 +52,12 @@
             color: #555;
             font-weight: 500;
             font-size: 14px;
+        }
+
+        label input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
         }
 
         input, select {
@@ -143,8 +149,19 @@
 
         <form id="idForm">
             <div class="form-group">
-                <label for="birthdate">Sünnipäev</label>
-                <input type="date" id="birthdate" required max="2025-12-31" min="1800-01-01">
+                <label>
+                    <input type="radio" name="dateType" value="birthdate">
+                    Sünnipäev (pp.kk.aaaa)
+                </label>
+                <input type="text" id="birthdate" placeholder="01.01.2000" pattern="\d{2}\.\d{2}\.\d{4}" disabled>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="radio" name="dateType" value="adult18" checked>
+                    18. sünnipäev (pp.kk.aaaa)
+                </label>
+                <input type="text" id="adult18" placeholder="01.01.2018" pattern="\d{2}\.\d{2}\.\d{4}" required>
             </div>
 
             <div class="form-group">
@@ -157,7 +174,7 @@
 
             <div class="form-group">
                 <label for="serial">Kolm viimast numbrit (001-999)</label>
-                <input type="number" id="serial" min="1" max="999" value="1" required>
+                <input type="number" id="serial" min="1" max="999" required>
             </div>
 
             <button type="submit">Genereeri isikukood</button>
@@ -223,21 +240,103 @@
             return codeWithoutChecksum + checksum;
         }
 
+        function parseEstonianDate(dateStr) {
+            const parts = dateStr.split('.');
+            if (parts.length !== 3) {
+                throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
+            }
+            const day = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const year = parseInt(parts[2]);
+
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
+            }
+
+            if (month < 1 || month > 12) {
+                throw new Error('Kuu peab olema vahemikus 1-12');
+            }
+
+            if (day < 1 || day > 31) {
+                throw new Error('Päev peab olema vahemikus 1-31');
+            }
+
+            if (year < 1800 || year > 2199) {
+                throw new Error('Aasta peab olema vahemikus 1800-2199');
+            }
+
+            return new Date(year, month - 1, day);
+        }
+
+        function calculateBirthdateFrom18th(adult18Date) {
+            const birthdate = new Date(adult18Date);
+            birthdate.setFullYear(birthdate.getFullYear() - 18);
+            return birthdate;
+        }
+
+        // Set random serial number on page load
+        function setRandomSerial() {
+            const randomSerial = Math.floor(Math.random() * 999) + 1;
+            document.getElementById('serial').value = randomSerial;
+        }
+        setRandomSerial();
+
+        // Handle radio button toggle
+        const radioButtons = document.querySelectorAll('input[name="dateType"]');
+        const birthdateInput = document.getElementById('birthdate');
+        const adult18Input = document.getElementById('adult18');
+
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'birthdate') {
+                    birthdateInput.disabled = false;
+                    birthdateInput.required = true;
+                    adult18Input.disabled = true;
+                    adult18Input.required = false;
+                } else {
+                    birthdateInput.disabled = true;
+                    birthdateInput.required = false;
+                    adult18Input.disabled = false;
+                    adult18Input.required = true;
+                }
+            });
+        });
+
         document.getElementById('idForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const birthdate = document.getElementById('birthdate').value;
+
+            const dateType = document.querySelector('input[name="dateType"]:checked').value;
             const gender = document.getElementById('gender').value;
             const serial = parseInt(document.getElementById('serial').value);
-            
-            if (birthdate && gender && serial) {
-                try {
-                    const personCode = generatePersonCode(birthdate, gender, serial);
-                    document.getElementById('generatedCode').textContent = personCode;
-                    document.getElementById('result').classList.add('show');
-                } catch (error) {
-                    alert('Error generating code: ' + error.message);
+
+            try {
+                let birthdate;
+
+                if (dateType === 'birthdate') {
+                    const birthdateStr = document.getElementById('birthdate').value;
+                    if (!birthdateStr) {
+                        throw new Error('Palun sisesta sünnipäev');
+                    }
+                    birthdate = parseEstonianDate(birthdateStr);
+                } else {
+                    const adult18Str = document.getElementById('adult18').value;
+                    if (!adult18Str) {
+                        throw new Error('Palun sisesta 18. sünnipäev');
+                    }
+                    const adult18Date = parseEstonianDate(adult18Str);
+                    birthdate = calculateBirthdateFrom18th(adult18Date);
                 }
+
+                const year = birthdate.getFullYear();
+                const month = String(birthdate.getMonth() + 1).padStart(2, '0');
+                const day = String(birthdate.getDate()).padStart(2, '0');
+                const isoDate = `${year}-${month}-${day}`;
+
+                const personCode = generatePersonCode(isoDate, gender, serial);
+                document.getElementById('generatedCode').textContent = personCode;
+                document.getElementById('result').classList.add('show');
+            } catch (error) {
+                alert('Viga: ' + error.message);
             }
         });
     </script>
