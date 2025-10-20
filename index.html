@@ -15,10 +15,16 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
+        }
+
+        .cards-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 0;
         }
 
         .container {
@@ -26,7 +32,6 @@
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
-            max-width: 500px;
             width: 100%;
         }
 
@@ -143,6 +148,8 @@
     </style>
 </head>
 <body>
+<div class="cards-wrapper">
+    <!-- Person Code Generator -->
     <div class="container">
         <h1>🇪🇪 Isikukoodi Generator</h1>
         <p class="subtitle">Eesti isikukoodi generaator</p>
@@ -186,159 +193,494 @@
         </div>
     </div>
 
-    <script>
-        function calculateChecksum(code) {
-            const weights1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1];
-            const weights2 = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3];
-            
-            let sum = 0;
+    <!-- CO2 Tax Calculator -->
+    <div class="container">
+        <h1>🚗 M1 sõidukimaksu Kalkulaator</h1>
+        <p class="subtitle">Leia maksusumma järgi CO2 ja Eestis registreerimise kuupäev</p>
+
+        <form id="taxForm">
+            <div class="form-group">
+                <label for="targetPrice">Soovitud maksusumma (EUR)</label>
+                <input type="number" id="targetPrice" step="0.01" min="0" placeholder="150.43" required>
+            </div>
+
+            <div class="form-group">
+                <label for="minDate">Minimaalne registreerimiskuupäev (pp.kk.aaaa) - valikuline</label>
+                <input type="text" id="minDate" placeholder="15.03.2025" pattern="\d{2}\.\d{2}\.\d{4}">
+            </div>
+
+            <button type="submit">Arvuta</button>
+        </form>
+
+        <div id="taxResult" class="result">
+            <div class="result-label">Tulemus:</div>
+            <div id="taxResultContent" style="font-size: 14px; line-height: 1.8;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateChecksum(code) {
+        const weights1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1];
+        const weights2 = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3];
+
+        let sum = 0;
+        for (let i = 0; i < 10; i++) {
+            sum += parseInt(code[i]) * weights1[i];
+        }
+
+        let checksum = sum % 11;
+
+        if (checksum === 10) {
+            sum = 0;
             for (let i = 0; i < 10; i++) {
-                sum += parseInt(code[i]) * weights1[i];
+                sum += parseInt(code[i]) * weights2[i];
             }
-            
-            let checksum = sum % 11;
-            
+            checksum = sum % 11;
             if (checksum === 10) {
-                sum = 0;
-                for (let i = 0; i < 10; i++) {
-                    sum += parseInt(code[i]) * weights2[i];
-                }
-                checksum = sum % 11;
-                if (checksum === 10) {
-                    checksum = 0;
-                }
+                checksum = 0;
             }
-            
-            return checksum;
         }
 
-        function generatePersonCode(birthdate, gender, serial) {
-            const date = new Date(birthdate);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            
-            let centuryGender;
-            if (year >= 1800 && year <= 1899) {
-                centuryGender = gender === 'male' ? '1' : '2';
-            } else if (year >= 1900 && year <= 1999) {
-                centuryGender = gender === 'male' ? '3' : '4';
-            } else if (year >= 2000 && year <= 2099) {
-                centuryGender = gender === 'male' ? '5' : '6';
-            } else if (year >= 2100 && year <= 2199) {
-                centuryGender = gender === 'male' ? '7' : '8';
+        return checksum;
+    }
+
+    function generatePersonCode(birthdate, gender, serial) {
+        const date = new Date(birthdate);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        let centuryGender;
+        if (year >= 1800 && year <= 1899) {
+            centuryGender = gender === 'male' ? '1' : '2';
+        } else if (year >= 1900 && year <= 1999) {
+            centuryGender = gender === 'male' ? '3' : '4';
+        } else if (year >= 2000 && year <= 2099) {
+            centuryGender = gender === 'male' ? '5' : '6';
+        } else if (year >= 2100 && year <= 2199) {
+            centuryGender = gender === 'male' ? '7' : '8';
+        } else {
+            throw new Error('Year out of valid range');
+        }
+
+        const yearStr = String(year).slice(-2);
+        const serialStr = String(serial).padStart(3, '0');
+
+        const codeWithoutChecksum = centuryGender + yearStr + month + day + serialStr;
+        const checksum = calculateChecksum(codeWithoutChecksum);
+
+        return codeWithoutChecksum + checksum;
+    }
+
+    function parseEstonianDate(dateStr) {
+        const parts = dateStr.split('.');
+        if (parts.length !== 3) {
+            throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
+        }
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const year = parseInt(parts[2]);
+
+        if (isNaN(day) || isNaN(month) || isNaN(year)) {
+            throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
+        }
+
+        if (month < 1 || month > 12) {
+            throw new Error('Kuu peab olema vahemikus 1-12');
+        }
+
+        if (day < 1 || day > 31) {
+            throw new Error('Päev peab olema vahemikus 1-31');
+        }
+
+        if (year < 1800 || year > 2199) {
+            throw new Error('Aasta peab olema vahemikus 1800-2199');
+        }
+
+        return new Date(year, month - 1, day);
+    }
+
+    function calculateBirthdateFrom18th(adult18Date) {
+        const birthdate = new Date(adult18Date);
+        birthdate.setFullYear(birthdate.getFullYear() - 18);
+        return birthdate;
+    }
+
+    // Set random serial number on page load
+    function setRandomSerial() {
+        const randomSerial = Math.floor(Math.random() * 999) + 1;
+        document.getElementById('serial').value = randomSerial;
+    }
+
+    setRandomSerial();
+
+    // Handle radio button toggle
+    const radioButtons = document.querySelectorAll('input[name="dateType"]');
+    const birthdateInput = document.getElementById('birthdate');
+    const adult18Input = document.getElementById('adult18');
+
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (this.value === 'birthdate') {
+                birthdateInput.disabled = false;
+                birthdateInput.required = true;
+                adult18Input.disabled = true;
+                adult18Input.required = false;
             } else {
-                throw new Error('Year out of valid range');
+                birthdateInput.disabled = true;
+                birthdateInput.required = false;
+                adult18Input.disabled = false;
+                adult18Input.required = true;
             }
-            
-            const yearStr = String(year).slice(-2);
-            const serialStr = String(serial).padStart(3, '0');
-            
-            const codeWithoutChecksum = centuryGender + yearStr + month + day + serialStr;
-            const checksum = calculateChecksum(codeWithoutChecksum);
-            
-            return codeWithoutChecksum + checksum;
-        }
+        });
+    });
 
-        function parseEstonianDate(dateStr) {
-            const parts = dateStr.split('.');
-            if (parts.length !== 3) {
-                throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
-            }
-            const day = parseInt(parts[0]);
-            const month = parseInt(parts[1]);
-            const year = parseInt(parts[2]);
+    document.getElementById('idForm').addEventListener('submit', function (e) {
+        e.preventDefault();
 
-            if (isNaN(day) || isNaN(month) || isNaN(year)) {
-                throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
-            }
+        const dateType = document.querySelector('input[name="dateType"]:checked').value;
+        const gender = document.getElementById('gender').value;
+        const serial = parseInt(document.getElementById('serial').value);
 
-            if (month < 1 || month > 12) {
-                throw new Error('Kuu peab olema vahemikus 1-12');
-            }
+        try {
+            let birthdate;
 
-            if (day < 1 || day > 31) {
-                throw new Error('Päev peab olema vahemikus 1-31');
-            }
-
-            if (year < 1800 || year > 2199) {
-                throw new Error('Aasta peab olema vahemikus 1800-2199');
-            }
-
-            return new Date(year, month - 1, day);
-        }
-
-        function calculateBirthdateFrom18th(adult18Date) {
-            const birthdate = new Date(adult18Date);
-            birthdate.setFullYear(birthdate.getFullYear() - 18);
-            return birthdate;
-        }
-
-        // Set random serial number on page load
-        function setRandomSerial() {
-            const randomSerial = Math.floor(Math.random() * 999) + 1;
-            document.getElementById('serial').value = randomSerial;
-        }
-        setRandomSerial();
-
-        // Handle radio button toggle
-        const radioButtons = document.querySelectorAll('input[name="dateType"]');
-        const birthdateInput = document.getElementById('birthdate');
-        const adult18Input = document.getElementById('adult18');
-
-        radioButtons.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'birthdate') {
-                    birthdateInput.disabled = false;
-                    birthdateInput.required = true;
-                    adult18Input.disabled = true;
-                    adult18Input.required = false;
-                } else {
-                    birthdateInput.disabled = true;
-                    birthdateInput.required = false;
-                    adult18Input.disabled = false;
-                    adult18Input.required = true;
+            if (dateType === 'birthdate') {
+                const birthdateStr = document.getElementById('birthdate').value;
+                if (!birthdateStr) {
+                    throw new Error('Palun sisesta sünnipäev');
                 }
-            });
+                birthdate = parseEstonianDate(birthdateStr);
+            } else {
+                const adult18Str = document.getElementById('adult18').value;
+                if (!adult18Str) {
+                    throw new Error('Palun sisesta 18. sünnipäev');
+                }
+                const adult18Date = parseEstonianDate(adult18Str);
+                birthdate = calculateBirthdateFrom18th(adult18Date);
+            }
+
+            const year = birthdate.getFullYear();
+            const month = String(birthdate.getMonth() + 1).padStart(2, '0');
+            const day = String(birthdate.getDate()).padStart(2, '0');
+            const isoDate = `${year}-${month}-${day}`;
+
+            const personCode = generatePersonCode(isoDate, gender, serial);
+            document.getElementById('generatedCode').textContent = personCode;
+            document.getElementById('result').classList.add('show');
+        } catch (error) {
+            alert('Viga: ' + error.message);
+        }
+    });
+
+    // ====== CO2 TAX CALCULATOR ======
+    const TAX_YEAR = 2025;
+    const DAYS_IN_YEAR = 365;
+    const BASE_COMPONENT = 50.00;
+    const API_BASE_URL = "https://avalik.emta.ee/msm-public";
+
+    // Cloudflare Worker URL for CORS proxy
+    const WORKER_URL = "https://misty-art-6435.karl-6ed.workers.dev";
+
+    function calculateCO2Component(co2Wltp) {
+        const co2 = parseFloat(co2Wltp);
+
+        if (co2 <= 117) {
+            return 0.00;
+        }
+
+        let total = 0.00;
+
+        // First range: 118-150 at 3.00 per g/km
+        if (co2 >= 118) {
+            const rangeEnd = Math.min(co2, 150);
+            const units = rangeEnd - 117;
+            total += units * 3.00;
+        }
+
+        // Second range: 151-200 at 3.50 per g/km
+        if (co2 >= 151) {
+            const rangeEnd = Math.min(co2, 200);
+            const units = rangeEnd - 150;
+            total += units * 3.50;
+        }
+
+        // Third range: 201+ at 4.00 per g/km
+        if (co2 >= 201) {
+            const units = co2 - 200;
+            total += units * 4.00;
+        }
+
+        return total;
+    }
+
+    function calculateProportion(estRegDate) {
+        const yearStart = new Date(TAX_YEAR, 0, 1);
+        const yearEnd = new Date(TAX_YEAR, 11, 31);
+
+        if (estRegDate >= yearEnd) {
+            return 0;
+        }
+
+        let taxStart;
+        if (estRegDate < yearStart) {
+            taxStart = yearStart;
+        } else {
+            taxStart = new Date(estRegDate);
+            taxStart.setDate(taxStart.getDate() + 1);
+        }
+
+        const remainingDays = Math.floor((yearEnd - taxStart) / (1000 * 60 * 60 * 24)) + 1;
+        return remainingDays / DAYS_IN_YEAR;
+    }
+
+    function calculateTax(co2Wltp, estRegDate) {
+        const co2Component = calculateCO2Component(co2Wltp);
+        const annualTax = BASE_COMPONENT + co2Component;
+        const proportion = calculateProportion(estRegDate);
+        const totalTax = Math.round((annualTax * proportion) * 100) / 100;
+
+        return {totalTax, annualTax};
+    }
+
+    function findExactMatchForZeroCO2(targetPrice, minDate) {
+        const target = parseFloat(targetPrice);
+        const annualTax = BASE_COMPONENT;
+
+        if (target > annualTax) {
+            return null;
+        }
+
+        const neededProportion = target / annualTax;
+
+        if (neededProportion <= 0 || neededProportion > 1) {
+            return null;
+        }
+
+        const yearEnd = new Date(TAX_YEAR, 11, 31);
+        const neededDays = Math.round(neededProportion * DAYS_IN_YEAR);
+
+        if (neededDays <= 0 || neededDays > DAYS_IN_YEAR) {
+            return null;
+        }
+
+        const estRegDate = new Date(yearEnd);
+        estRegDate.setDate(estRegDate.getDate() - neededDays);
+
+        if (estRegDate > yearEnd) {
+            return null;
+        }
+
+        if (minDate && estRegDate < minDate) {
+            return null;
+        }
+
+        const co2 = 100;
+        const {totalTax, annualTax: calcAnnual} = calculateTax(co2, estRegDate);
+
+        if (Math.abs(totalTax - target) < 0.01) {
+            return {
+                co2Wltp: co2,
+                estRegDate: estRegDate,
+                calculatedTax: totalTax,
+                annualTax: calcAnnual,
+                proportion: `${neededDays}/${DAYS_IN_YEAR}`,
+                note: 'Iga CO2 väärtus <= 117 g/km sobib selle maksusumma jaoks'
+            };
+        }
+
+        return null;
+    }
+
+    function findExactMatch(targetPrice, minDate) {
+        const target = parseFloat(targetPrice);
+
+        // Check if target is achievable with CO2 <= 117
+        if (target <= BASE_COMPONENT) {
+            const result = findExactMatchForZeroCO2(targetPrice, minDate);
+            if (result) {
+                return result;
+            }
+        }
+
+        const yearEnd = new Date(TAX_YEAR, 11, 31);
+        let co2 = 117;
+        const maxIterations = 30000;
+
+        for (let iteration = 0; iteration < maxIterations; iteration++) {
+            co2 += 0.01;
+
+            const co2Component = calculateCO2Component(co2);
+            const annualTax = BASE_COMPONENT + co2Component;
+
+            if (annualTax < target) {
+                continue;
+            }
+
+            const neededProportion = target / annualTax;
+
+            if (neededProportion <= 0 || neededProportion > 1) {
+                continue;
+            }
+
+            const neededDays = Math.round(neededProportion * DAYS_IN_YEAR);
+
+            if (neededDays <= 0 || neededDays > DAYS_IN_YEAR) {
+                continue;
+            }
+
+            const estRegDate = new Date(yearEnd);
+            estRegDate.setDate(estRegDate.getDate() - neededDays);
+
+            if (estRegDate > yearEnd) {
+                continue;
+            }
+
+            if (minDate && estRegDate < minDate) {
+                continue;
+            }
+
+            const {totalTax, annualTax: calcAnnual} = calculateTax(co2, estRegDate);
+
+            if (Math.abs(totalTax - target) < 0.01) {
+                return {
+                    co2Wltp: co2,
+                    estRegDate: estRegDate,
+                    calculatedTax: totalTax,
+                    annualTax: calcAnnual,
+                    proportion: `${neededDays}/${DAYS_IN_YEAR}`
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+    }
+
+    function formatDateISO(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function buildAPIUrl(co2Wltp, estRegDate) {
+        const dateStr = formatDateISO(estRegDate);
+        const params = new URLSearchParams({
+            co2Wltp: co2Wltp,
+            kerbMass: 1499,
+            initialRegDate: dateStr,
+            calculationDate: dateStr,
+            calculationYear: TAX_YEAR,
+            category: 'M1',
+            fuelCombination: 'YHEKYTUSELINE',
+            engineCapacity: 1984,
+            maxMass: 1500,
+            maxNetPower: 85,
+            engineType: 'BENSIIN_KATALYSAATOR'
         });
 
-        document.getElementById('idForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        return `${WORKER_URL}?${params}`;
+    }
 
-            const dateType = document.querySelector('input[name="dateType"]:checked').value;
-            const gender = document.getElementById('gender').value;
-            const serial = parseInt(document.getElementById('serial').value);
+    async function validateWithAPI(co2Wltp, estRegDate) {
+        try {
+            const url = buildAPIUrl(co2Wltp, estRegDate);
+            const response = await fetch(url);
 
+            if (!response.ok) {
+                return {error: `API tagastas staatuskoodiga ${response.status}`};
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                return {error: data.error};
+            }
+
+            const apiTotalTax = data.totalPrice;
+
+            if (apiTotalTax === undefined) {
+                return {error: "API vastuses puudub 'totalPrice' väli"};
+            }
+
+            return {apiTax: apiTotalTax};
+        } catch (error) {
+            return {error: `Viga API päringus: ${error.message}`};
+        }
+    }
+
+    document.getElementById('taxForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const targetPrice = parseFloat(document.getElementById('targetPrice').value);
+        const minDateStr = document.getElementById('minDate').value;
+
+        let minDate = null;
+        if (minDateStr) {
             try {
-                let birthdate;
-
-                if (dateType === 'birthdate') {
-                    const birthdateStr = document.getElementById('birthdate').value;
-                    if (!birthdateStr) {
-                        throw new Error('Palun sisesta sünnipäev');
-                    }
-                    birthdate = parseEstonianDate(birthdateStr);
-                } else {
-                    const adult18Str = document.getElementById('adult18').value;
-                    if (!adult18Str) {
-                        throw new Error('Palun sisesta 18. sünnipäev');
-                    }
-                    const adult18Date = parseEstonianDate(adult18Str);
-                    birthdate = calculateBirthdateFrom18th(adult18Date);
-                }
-
-                const year = birthdate.getFullYear();
-                const month = String(birthdate.getMonth() + 1).padStart(2, '0');
-                const day = String(birthdate.getDate()).padStart(2, '0');
-                const isoDate = `${year}-${month}-${day}`;
-
-                const personCode = generatePersonCode(isoDate, gender, serial);
-                document.getElementById('generatedCode').textContent = personCode;
-                document.getElementById('result').classList.add('show');
+                minDate = parseEstonianDate(minDateStr);
             } catch (error) {
                 alert('Viga: ' + error.message);
+                return;
             }
-        });
-    </script>
+        }
+
+        const resultDiv = document.getElementById('taxResult');
+        const contentDiv = document.getElementById('taxResultContent');
+
+        contentDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Arvutan...</div>';
+        resultDiv.classList.add('show');
+
+        // Run calculation in background to not block UI
+        setTimeout(async () => {
+            const result = findExactMatch(targetPrice, minDate);
+
+            if (!result) {
+                contentDiv.innerHTML = '<div style="color: #e74c3c;">Täpset vastet ei leitud. Proovi teist maksusummat.</div>';
+                return;
+            }
+
+            let html = `
+                    <strong>CO2 WLTP:</strong> ${result.co2Wltp.toFixed(2)} g/km<br>
+                    <strong>Registreerimiskuupäev:</strong> ${formatDate(result.estRegDate)}<br>
+                    <strong>Arvutatud maks:</strong> ${result.calculatedTax.toFixed(2)} EUR<br>
+                    <small>
+                    <strong>Aastamaks:</strong> ${result.annualTax.toFixed(2)} EUR<br>
+                    <strong>Proportsioon:</strong> ${result.proportion}
+                    </small>
+                `;
+
+            if (result.note) {
+                html += `<br><br><em style="color: #667eea;">${result.note}</em>`;
+            }
+
+            // Validate with API
+            contentDiv.innerHTML = html + '<br><br><div style="text-align: center; color: #666;">Valideeritakse API-ga...</div>';
+
+            const apiResult = await validateWithAPI(result.co2Wltp, result.estRegDate);
+
+            if (apiResult.error) {
+                html += `<br><br><span style="color: #f39c12;">⚠️ API valideerimise viga: ${apiResult.error}</span>`;
+            } else if (apiResult.apiTax !== undefined) {
+                const match = Math.abs(apiResult.apiTax - result.calculatedTax) < 0.01;
+                if (match) {
+                    html += `<br><br><span style="color: #27ae60;">✓ API kinnitas: ${apiResult.apiTax.toFixed(2)} EUR</span>`;
+                } else {
+                    html += `<br><br><span style="color: #e74c3c;">✗ API erinevus: ${apiResult.apiTax.toFixed(2)} EUR (vahe: ${Math.abs(apiResult.apiTax - result.calculatedTax).toFixed(2)} EUR)</span>`;
+                }
+            }
+
+            contentDiv.innerHTML = html;
+        }, 100);
+    });
+</script>
 </body>
 </html>
