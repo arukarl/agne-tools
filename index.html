@@ -479,7 +479,7 @@
         const co2 = 100;
         const {totalTax, annualTax: calcAnnual} = calculateTax(co2, estRegDate);
 
-        if (Math.abs(totalTax - target) < 0.01) {
+        if (totalTax === target) {
             return {
                 co2Wltp: co2,
                 estRegDate: estRegDate,
@@ -543,7 +543,7 @@
 
             const {totalTax, annualTax: calcAnnual} = calculateTax(co2, estRegDate);
 
-            if (Math.abs(totalTax - target) < 0.01) {
+            if (totalTax === target) {
                 return {
                     co2Wltp: co2,
                     estRegDate: estRegDate,
