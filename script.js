@@ -118,6 +118,16 @@ function initPersonCodeGenerator() {
         });
     });
 
+    // Handle "Täna" link click
+    document.getElementById('todayLink').addEventListener('click', function (e) {
+        e.preventDefault();
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        document.getElementById('adult18').value = `${day}.${month}.${year}`;
+    });
+
     document.getElementById('idForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
