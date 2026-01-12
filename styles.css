@@ -151,3 +151,11 @@ button:active {
 .today-link:hover {
     text-decoration: underline;
 }
+
+.clear-btn {
+    padding: 3.5px;
+    margin-top: 8px;
+    font-size: 12px;
+    background: #e0e0e0;
+    color: #555;
+}

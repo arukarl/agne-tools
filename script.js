@@ -209,6 +209,14 @@ function calculateVehicleAge(initialRegDate, referenceDate) {
 }
 
 function initVehicleAgeCalculator() {
+    // Clear button handler
+    document.getElementById('ageClearBtn').addEventListener('click', function() {
+        document.getElementById('worldInitialRegDate').value = '';
+        document.getElementById('estInitialRegDate').value = '';
+        document.getElementById('regStartDate').value = '';
+        document.getElementById('ageResult').classList.remove('show');
+    });
+
     document.getElementById('ageForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
