@@ -167,6 +167,100 @@ function initPersonCodeGenerator() {
     });
 }
 
+// ====== VEHICLE AGE CALCULATOR ======
+
+function calculateVehicleAge(initialRegDate, referenceDate) {
+    // Calculate full years elapsed
+    // A full year has elapsed when the anniversary date has passed
+    // Example: initialRegDate = 01.01.2025, vehicle becomes 1 year old on 02.01.2026
+
+    let years = referenceDate.getFullYear() - initialRegDate.getFullYear();
+
+    // Check if the anniversary has occurred in the reference year
+    const anniversaryThisYear = new Date(
+        referenceDate.getFullYear(),
+        initialRegDate.getMonth(),
+        initialRegDate.getDate()
+    );
+
+    // The full year is only complete the day AFTER the anniversary
+    // So we need referenceDate > anniversaryThisYear (not >=)
+    if (referenceDate <= anniversaryThisYear) {
+        years--;
+    }
+
+    return Math.max(0, years);
+}
+
+function initVehicleAgeCalculator() {
+    document.getElementById('ageForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const resultDiv = document.getElementById('ageResult');
+        const contentDiv = document.getElementById('ageResultContent');
+
+        try {
+            const worldInitialRegDateStr = document.getElementById('worldInitialRegDate').value;
+            const estInitialRegDateStr = document.getElementById('estInitialRegDate').value;
+            const regStartDateStr = document.getElementById('regStartDate').value;
+            const taxYear = parseInt(document.getElementById('ageTaxYear').value);
+
+            const worldInitialRegDate = parseEstonianDate(worldInitialRegDateStr);
+
+            // Add 1 day to estInitialRegDate and regStartDate (tax calculation starts next day)
+            let estInitialRegDate = new Date(0);
+            if (estInitialRegDateStr) {
+                estInitialRegDate = parseEstonianDate(estInitialRegDateStr);
+                estInitialRegDate.setDate(estInitialRegDate.getDate() + 1);
+            }
+
+            let regStartDate = new Date(0);
+            if (regStartDateStr) {
+                regStartDate = parseEstonianDate(regStartDateStr);
+                regStartDate.setDate(regStartDate.getDate() + 1);
+            }
+
+            const taxYearStart = new Date(taxYear, 0, 1); // 01.01.taxYear
+
+            // Reference date is max of: 01.01.taxYear, estInitialRegDate, regStartDate
+            let referenceDate = taxYearStart;
+            if (estInitialRegDate > referenceDate) {
+                referenceDate = estInitialRegDate;
+            }
+            if (regStartDate > referenceDate) {
+                referenceDate = regStartDate;
+            }
+
+            const age = calculateVehicleAge(worldInitialRegDate, referenceDate);
+
+            // Calculate next birthday (when vehicle becomes age+1)
+            // Vehicle becomes 1 year older the day AFTER its anniversary
+            const nextBirthday = new Date(
+                worldInitialRegDate.getFullYear() + age + 1,
+                worldInitialRegDate.getMonth(),
+                worldInitialRegDate.getDate() + 1
+            );
+
+            const html = `
+                <strong>Sõiduki vanus:</strong> ${age} aastat<br>
+                <strong>Saab ${age + 1}-aastaseks:</strong> ${formatDate(nextBirthday)}<br><br>
+                <small>
+                <strong>Arvutuse alus:</strong><br>
+                Alguskuupäev: ${formatDate(worldInitialRegDate)}<br>
+                Maksuperioodi algus: ${formatDate(referenceDate)}<br>
+                <em>(max: 01.01.${taxYear}, Eesti esmareg.+1, alustav toiming+1)</em>
+                </small>
+            `;
+
+            contentDiv.innerHTML = html;
+            resultDiv.classList.add('show');
+
+        } catch (error) {
+            alert('Viga: ' + error.message);
+        }
+    });
+}
+
 // ====== CO2 TAX CALCULATOR ======
 
 const TAX_YEAR = 2025;
@@ -482,5 +576,6 @@ function initCO2TaxCalculator() {
 // Initialize all modules when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initPersonCodeGenerator();
+    initVehicleAgeCalculator();
     initCO2TaxCalculator();
 });

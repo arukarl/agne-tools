@@ -8,6 +8,41 @@
 </head>
 <body>
 <div class="cards-wrapper">
+        <!-- Vehicle Age Calculator -->
+    <div class="container">
+        <h1>📅 Sõiduki vanuse kalkulaator</h1>
+        <p class="subtitle">Arvuta sõiduki vanus maksuaasta seisuga</p>
+
+        <form id="ageForm">
+            <div class="form-group">
+                <label for="worldInitialRegDate">Maailma esmaregistreerimine (pp.kk.aaaa)</label>
+                <input type="text" id="worldInitialRegDate" placeholder="01.01.2020" pattern="\d{2}\.\d{2}\.\d{4}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="estInitialRegDate">Eestis esmaregistreerimine (pp.kk.aaaa) - valikuline</label>
+                <input type="text" id="estInitialRegDate" placeholder="01.01.2024" pattern="\d{2}\.\d{2}\.\d{4}">
+            </div>
+
+            <div class="form-group">
+                <label for="regStartDate">Alustav toiming (pp.kk.aaaa) - valikuline</label>
+                <input type="text" id="regStartDate" placeholder="15.06.2025" pattern="\d{2}\.\d{2}\.\d{4}">
+            </div>
+
+            <div class="form-group">
+                <label for="ageTaxYear">Maksuaasta</label>
+                <input type="number" id="ageTaxYear" value="2025" min="2020" max="2100" required>
+            </div>
+
+            <button type="submit">Arvuta vanus</button>
+        </form>
+
+        <div id="ageResult" class="result">
+            <div class="result-label">Tulemus:</div>
+            <div id="ageResultContent" style="font-size: 14px; line-height: 1.8;"></div>
+        </div>
+    </div>
+
     <!-- Person Code Generator -->
     <div class="container">
         <h1>🇪🇪 Isikukoodi Generator</h1>
