@@ -15,18 +15,18 @@
 
         <form id="ageForm">
             <div class="form-group">
-                <label for="worldInitialRegDate">Maailma esmaregistreerimine (pp.kk.aaaa)</label>
-                <input type="text" id="worldInitialRegDate" placeholder="01.01.2020" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                <label for="worldInitialRegDate">Maailma esmaregistreerimine</label>
+                <input type="text" id="worldInitialRegDate" placeholder="01.01.2020" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})" required>
             </div>
 
             <div class="form-group">
-                <label for="estInitialRegDate">Eestis esmaregistreerimine (pp.kk.aaaa) - valikuline</label>
-                <input type="text" id="estInitialRegDate" placeholder="01.01.2024" pattern="\d{2}\.\d{2}\.\d{4}">
+                <label for="estInitialRegDate">Eestis esmaregistreerimine - valikuline</label>
+                <input type="text" id="estInitialRegDate" placeholder="01.01.2024" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})">
             </div>
 
             <div class="form-group">
-                <label for="regStartDate">Alustav toiming (pp.kk.aaaa) - valikuline</label>
-                <input type="text" id="regStartDate" placeholder="15.06.2025" pattern="\d{2}\.\d{2}\.\d{4}">
+                <label for="regStartDate">Alustav toiming - valikuline</label>
+                <input type="text" id="regStartDate" placeholder="15.06.2025" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})">
             </div>
 
             <div class="form-group">
@@ -52,17 +52,17 @@
             <div class="form-group">
                 <label>
                     <input type="radio" name="dateType" value="birthdate">
-                    Sünnipäev (pp.kk.aaaa)
+                    Sünnipäev (pp.kk.aaaa / aaaa-kk-pp)
                 </label>
-                <input type="text" id="birthdate" placeholder="01.01.2000" pattern="\d{2}\.\d{2}\.\d{4}" disabled>
+                <input type="text" id="birthdate" placeholder="01.01.2000" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})" disabled>
             </div>
 
             <div class="form-group">
                 <label>
                     <input type="radio" name="dateType" value="adult18" checked>
-                    18. sünnipäev (pp.kk.aaaa)
+                    18. sünnipäev (pp.kk.aaaa / aaaa-kk-pp)
                 </label>
-                <input type="text" id="adult18" placeholder="01.01.2018" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                <input type="text" id="adult18" placeholder="01.01.2018" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})" required>
                 <a href="#" id="todayLink" class="today-link">Täna</a>
             </div>
 
@@ -100,8 +100,8 @@
             </div>
 
             <div class="form-group">
-                <label for="minDate">Minimaalne registreerimiskuupäev (pp.kk.aaaa) - valikuline</label>
-                <input type="text" id="minDate" placeholder="31.12.2024" pattern="\d{2}\.\d{2}\.\d{4}">
+                <label for="minDate">Minimaalne registreerimiskuupäev (pp.kk.aaaa / aaaa-kk-pp) - valikuline</label>
+                <input type="text" id="minDate" placeholder="31.12.2024" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})">
             </div>
 
             <button type="submit">Arvuta</button>

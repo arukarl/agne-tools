@@ -54,16 +54,32 @@ function generatePersonCode(birthdate, gender, serial) {
 }
 
 function parseEstonianDate(dateStr) {
-    const parts = dateStr.split('.');
-    if (parts.length !== 3) {
-        throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
+    let parts;
+    if (dateStr.includes('-')) {
+        parts = dateStr.split('-');
+    } else if (dateStr.includes('/')) {
+        parts = dateStr.split('/');
+    } else {
+        parts = dateStr.split('.');
     }
-    const day = parseInt(parts[0]);
-    const month = parseInt(parts[1]);
-    const year = parseInt(parts[2]);
+
+    if (parts.length !== 3) {
+        throw new Error('Vigane kuupäeva formaat');
+    }
+
+    let day, month, year;
+    if (parts[0].length === 4) {
+        year = parseInt(parts[0]);
+        month = parseInt(parts[1]);
+        day = parseInt(parts[2]);
+    } else {
+        day = parseInt(parts[0]);
+        month = parseInt(parts[1]);
+        year = parseInt(parts[2]);
+    }
 
     if (isNaN(day) || isNaN(month) || isNaN(year)) {
-        throw new Error('Vigane kuupäeva formaat. Kasuta pp.kk.aaaa');
+        throw new Error('Vigane kuupäeva formaat');
     }
 
     if (month < 1 || month > 12) {
