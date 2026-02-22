@@ -287,7 +287,7 @@ function initVehicleAgeCalculator() {
 
 // ====== CO2 TAX CALCULATOR ======
 
-const TAX_YEAR = 2025;
+const TAX_YEAR = 2026;
 const DAYS_IN_YEAR = 365;
 const BASE_COMPONENT = 50.00;
 const API_BASE_URL = "https://avalik.emta.ee/msm-public";
@@ -485,18 +485,21 @@ function formatDateISO(date) {
 
 function buildAPIUrl(co2Wltp, estRegDate) {
     const dateStr = formatDateISO(estRegDate);
+    const minCalcDate = new Date(TAX_YEAR - 1, 11, 31); // 31.12 of year before TAX_YEAR
+    const calcDateStr = estRegDate < minCalcDate ? formatDateISO(minCalcDate) : dateStr;
     const params = new URLSearchParams({
         co2Wltp: co2Wltp,
         kerbMass: 1499,
         initialRegDate: dateStr,
-        calculationDate: dateStr,
+        calculationDate: calcDateStr,
         calculationYear: TAX_YEAR,
         category: 'M1',
         fuelCombination: 'YHEKYTUSELINE',
         engineCapacity: 1984,
         maxMass: 1500,
         maxNetPower: 85,
-        engineType: 'BENSIIN_KATALYSAATOR'
+        seats: 5,
+        engineType: 'BENSIIN'
     });
 
     return `${WORKER_URL}?${params}`;
