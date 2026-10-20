@@ -113,6 +113,35 @@
             <div id="taxResultContent" style="font-size: 14px; line-height: 1.8;"></div>
         </div>
     </div>
+
+    <!-- Working Hours Countdown -->
+    <div class="container">
+        <h1>⏳ Töötundide loendur</h1>
+        <p class="subtitle">Mitu töötundi on jäänud aasta lõpuni või valitud kuupäevani</p>
+
+        <form id="hoursForm">
+            <div class="form-group">
+                <label for="hoursTargetDate">Sihtkuupäev (pp.kk.aaaa / aaaa-kk-pp)</label>
+                <input type="text" id="hoursTargetDate" placeholder="31.12.2026" pattern="(\d{2}[./]\d{2}[./]\d{4}|\d{4}[-/]\d{2}[-/]\d{2})" required>
+                <a href="#" id="yearEndLink" class="today-link">Aasta lõpp</a>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="hoursIncludeToday" checked>
+                    Arvesta tänane päev
+                </label>
+            </div>
+
+            <button type="submit">Arvuta töötunnid</button>
+        </form>
+
+        <div id="hoursResult" class="result">
+            <div class="result-label">Töötunde jäänud:</div>
+            <div class="result-code"><span id="hoursResultValue">-</span> <span class="result-code-sub" id="hoursResultDays"></span></div>
+            <div id="hoursResultContent" style="font-size: 14px; line-height: 1.8; margin-top: 10px;"></div>
+        </div>
+    </div>
 </div>
 
 <script src="script.js"></script>

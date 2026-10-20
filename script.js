@@ -600,9 +600,163 @@ function initCO2TaxCalculator() {
     });
 }
 
+// ====== WORKING HOURS COUNTDOWN ======
+
+const WORKDAY_HOURS = 8;
+const SHORTENED_DAY_HOURS = 5;
+
+// TLS § 53 lg 3: the day immediately before these holidays is shortened by 3 hours
+// (only if that day itself is a working day - a weekend in between cancels it)
+const SHORTENED_BEFORE = ['01-01', '02-24', '06-23', '12-24'];
+
+// Easter Sunday in the Gregorian calendar (anonymous Gregorian algorithm)
+function getEasterSunday(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+}
+
+// Estonian public holidays (riigipühad)
+function getPublicHolidays(year) {
+    const easter = getEasterSunday(year);
+
+    return [
+        {date: new Date(year, 0, 1), name: 'uusaasta'},
+        {date: new Date(year, 1, 24), name: 'iseseisvuspäev'},
+        {date: new Date(year, easter.getMonth(), easter.getDate() - 2), name: 'suur reede'},
+        {date: easter, name: 'ülestõusmispühade 1. püha'},
+        {date: new Date(year, 4, 1), name: 'kevadpüha'},
+        {date: new Date(year, easter.getMonth(), easter.getDate() + 49), name: 'nelipühade 1. püha'},
+        {date: new Date(year, 5, 23), name: 'võidupüha'},
+        {date: new Date(year, 5, 24), name: 'jaanipäev'},
+        {date: new Date(year, 7, 20), name: 'taasiseseisvumispäev'},
+        {date: new Date(year, 11, 24), name: 'jõululaupäev'},
+        {date: new Date(year, 11, 25), name: 'esimene jõulupüha'},
+        {date: new Date(year, 11, 26), name: 'teine jõulupüha'}
+    ];
+}
+
+function isShortenedDay(date) {
+    const nextDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    return SHORTENED_BEFORE.includes(formatDateISO(nextDay).slice(5));
+}
+
+// Working hours from startDate to endDate (both inclusive), 5-day week
+function calculateWorkingHours(startDate, endDate) {
+    const holidays = new Map();
+    for (let year = startDate.getFullYear(); year <= endDate.getFullYear(); year++) {
+        getPublicHolidays(year).forEach(holiday => holidays.set(formatDateISO(holiday.date), holiday));
+    }
+
+    const result = {hours: 0, fullDays: 0, shortenedDays: [], holidays: []};
+    const date = new Date(startDate);
+
+    while (date <= endDate) {
+        const weekday = date.getDay();
+        const holiday = holidays.get(formatDateISO(date));
+
+        if (weekday !== 0 && weekday !== 6) {
+            if (holiday) {
+                result.holidays.push(holiday);
+            } else if (isShortenedDay(date)) {
+                result.hours += SHORTENED_DAY_HOURS;
+                result.shortenedDays.push(new Date(date));
+            } else {
+                result.hours += WORKDAY_HOURS;
+                result.fullDays++;
+            }
+        }
+
+        date.setDate(date.getDate() + 1);
+    }
+
+    return result;
+}
+
+function initWorkingHoursCountdown() {
+    const targetInput = document.getElementById('hoursTargetDate');
+    const includeTodayInput = document.getElementById('hoursIncludeToday');
+
+    function setYearEnd() {
+        targetInput.value = formatDate(new Date(new Date().getFullYear(), 11, 31));
+    }
+
+    function showWorkingHours() {
+        const resultDiv = document.getElementById('hoursResult');
+        const contentDiv = document.getElementById('hoursResultContent');
+
+        try {
+            const targetDate = parseEstonianDate(targetInput.value);
+
+            const startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            if (targetDate < startDate) {
+                throw new Error('Sihtkuupäev ei saa olla minevikus');
+            }
+            if (!includeTodayInput.checked) {
+                startDate.setDate(startDate.getDate() + 1);
+            }
+
+            const result = calculateWorkingHours(startDate, targetDate);
+            const workDays = result.fullDays + result.shortenedDays.length;
+
+            // Long ranges would produce endless lists - show only the count then
+            const listOrCount = (items, format) =>
+                items.length === 0 ? '-' : items.length > 10 ? `${items.length} päeva` : items.map(format).join(', ');
+
+            const html = `
+                <strong>Periood:</strong> ${startDate <= targetDate ? formatDate(startDate) : formatDate(targetDate)} – ${formatDate(targetDate)}<br><br>
+                <small>
+                <strong>Lühendatud tööpäevad (${SHORTENED_DAY_HOURS} h):</strong> ${listOrCount(result.shortenedDays, formatDate)}<br>
+                <strong>Riigipühad tööpäevadel:</strong> ${listOrCount(result.holidays, h => `${formatDate(h.date)} ${h.name}`)}<br>
+                <em>(${WORKDAY_HOURS} h tööpäev, riigipühale eelnev lühendatud päev ${SHORTENED_DAY_HOURS} h – TLS § 53)</em>
+                </small>
+            `;
+
+            document.getElementById('hoursResultValue').textContent = `${result.hours} h`;
+            document.getElementById('hoursResultDays').textContent = `${workDays} ${workDays === 1 ? 'tööpäev' : 'tööpäeva'}`;
+            contentDiv.innerHTML = html;
+            resultDiv.classList.add('show');
+
+        } catch (error) {
+            alert('Viga: ' + error.message);
+        }
+    }
+
+    document.getElementById('yearEndLink').addEventListener('click', function (e) {
+        e.preventDefault();
+        setYearEnd();
+        showWorkingHours();
+    });
+
+    includeTodayInput.addEventListener('change', showWorkingHours);
+
+    document.getElementById('hoursForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        showWorkingHours();
+    });
+
+    // Year end is the default target - show the countdown right away
+    setYearEnd();
+    showWorkingHours();
+}
+
 // Initialize all modules when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initPersonCodeGenerator();
     initVehicleAgeCalculator();
     initCO2TaxCalculator();
+    initWorkingHoursCountdown();
 });
